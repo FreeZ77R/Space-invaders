@@ -1,0 +1,545 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+#include <time.h>
+
+#define NBV 5
+#define NBVITA 3
+
+/*---------------------------------------------------------------------------*/
+/* GESTION DU TERMINAL */
+/*---------------------------------------------------------------------------*/
+void gotoxy(int x, int y);
+void color(int cT,int cF);
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/* GESTION DU JEU */
+/*---------------------------------------------------------------------------*/
+/*Fct qui affiche la page d'accueil*/
+void accueil(void);
+/*Fct qui gère le menu*/
+int menu(void);
+/*Fct qui affiche les regles pour jouer*/
+void regle(void);
+/*Fct qui demande de choisir la difficultée*/
+int difficult(void);
+/*Fct qui délimite la mise en page du jeu*/
+void mise_en_page_jeu(void);
+
+
+
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/* FONCTION PRINCIPALE */
+/*---------------------------------------------------------------------------*/
+int main()
+{
+    int choix=0,ite=0,i;/*ite:nb d'itérations / choix:choix du menu*/
+    int tabxA[NBV];/*tableau des positions en x des vaisseaux ennemis*/
+    int tabyA[NBV]= {1,6,9,12,15};/*tableau des positions en Y des vaisseaux ennemis*/
+    int tabxV[NBVITA];/*tableau des positions en x des vitamines*/
+    int tabyV[NBVITA]= {1,1,1}; /*tableau des positions en Y des vitamines*/
+    int vie=5;/*nombre de vies*/
+    int dif;/*difficulté*/
+    int y_base=23,y_tir;/*position en Y de la base et du tir*/
+    int x_base=40,x_tir;/*position en X de la base et du tir*/
+    int x_boss;/*position en X du BOSS*/
+    int y_boss=1;/*position en Y du boss*/
+    char touche;/*touche sélectionner sur le clavier*/
+    int fin;/*variable qui lorsqu'elle vaut 0 indique la fin du jeu*/
+    int score=0;/*score*/
+    int secu=0;/*blindage*/
+    float time_sec=0;/*temps en seconde*/
+    int time_min=0;/*temps en minutes*/
+    int compteur_tir=0;/*compte les tirs que se prend le BOSS*/
+    int fin_boss=1;/*est une condition de fin du jeu*/
+    int modeboss=0;/*conditionne l'affichage du boss*/
+
+
+    /*Fixe la taille de l'écran*/
+    system("mode con lines=50 cols=150");
+    srand(time(NULL));
+    /*Appel de la fct accueil*/
+    accueil();
+
+    /*Menu principal*/
+    while(choix!=4)
+    {
+        fin=1;//initialisation
+        touche='e';//initialisation
+        /*Appel de la fct menu*/
+        choix=menu();
+
+        /*choix difficulltee*/
+        if(choix==1)
+        {
+            secu=1;
+            dif=difficult();
+            getchar();
+            system("cls");
+        }
+        /*arrêt du jeu*/
+        else if(choix==4)
+        {
+            return 0;
+        }
+        /*affichage règles*/
+        else if(choix==3)
+        {
+            regle();
+
+            getchar();
+            getchar();
+            system("cls");
+        }
+        /*lancement du jeu*/
+        else if(choix==2)
+        {
+            if(secu==0)
+            {
+                printf("Vous devez d'abord choisir votre difficultee !\n\n\nAppuyez sur une touche pour recommencer...");
+                getchar();
+                getchar();
+                system("cls");
+            }
+            else
+            {
+                getchar();
+                system("cls");
+
+                mise_en_page_jeu();
+
+                /*Initialisation des coordonnées en X des vaisseaux et BOSS*/
+                for(i=0; i<5; i++)
+                {
+                    tabxA[i]=rand()%79 + 1;
+                }
+                for(i=0; i<5; i++)
+                {
+                    tabxV[i]=rand()%79 + 1;
+                }
+                x_boss=rand()%79 + 1;
+
+                /*Condition d'arrêt du jeu*/
+                while(fin!=0)
+                {
+                    ite=ite+1;
+
+/*------------------Affichage nb vie et score---------------------------*/
+                    /*Affichage nb vie*/
+                    gotoxy(90,7);
+                    printf("vie:%d",vie);
+
+                    /*Affichage score*/
+                    score=score+1;
+                    gotoxy(90,15);
+                    printf("score:%d",score);
+/*----------------------------------------------------------------------*/
+
+/*-------------------création du timer----------------------------------*/
+                    if(time_sec>=60)
+                    {
+                        time_min=time_min+1;
+                        time_sec=0;
+                    }
+                    else
+                    {
+                        time_sec=time_sec+0.15;
+                    }
+
+                    /*Affichage timer*/
+                    gotoxy(90,23);
+                    printf("temps: %d min %2.f s",time_min,time_sec);
+/*-----------------------------------------------------------------------*/
+
+                    /*Effacer le tir précèdent*/
+                    y_tir=22;
+                    while(y_tir>2)
+                    {
+                        y_tir--;
+
+                        gotoxy(x_tir,y_tir);
+                        printf(" ");
+                    }
+
+                    /*Affichage pour vaisseaux*/
+                    for(i=0; i<5; i++)
+                    {
+                        gotoxy(tabxA[i],tabyA[i]);
+                        printf("   ");
+                        /*La difficultée va jouer sur l'incrémentation en Y des vaisseaux*/
+                        if(dif==1)
+                        {
+                            tabyA[i]=tabyA[i]+1;
+                        }
+                        else if(dif==2)
+                        {
+                            tabyA[i]=tabyA[i]+2;
+                        }
+                        else
+                        {
+                            tabyA[i]=tabyA[i]+3;
+                        }
+
+                        if(tabyA[i]>24)
+                        {
+                            tabyA[i]=1;
+
+                            tabxA[i]=rand()%79 + 1;
+                        }
+                        gotoxy(tabxA[i],tabyA[i]);
+                        printf("___");
+                    }
+
+/*------------------BOSS--------------------------*/
+                    if(ite%1000==0)
+                    {
+                        modeboss= 1;
+                    }
+                    if (modeboss==1)
+                    {
+
+
+                        gotoxy(x_boss,y_boss);
+                        printf("       ");
+
+                        if (ite%10==0)
+                            y_boss=y_boss+1;
+
+
+                        gotoxy(x_boss,y_boss);
+                        printf("|-----|");
+                        if(y_boss>23)
+                        {
+                            fin_boss=0;
+                        }
+                    }
+/*-------------------------------------------------*/
+
+/*-------------------Vitamines---------------------*/
+                    /*Condition d'affichage pour vitamines*/
+                    if(ite%250==0)
+                    {
+                        /*Affichage vitamines*/
+                        for(i=0; i<3; i++)
+                        {
+
+                            gotoxy(tabxV[i],tabyV[i]);
+                            printf("   ");
+                            /*La difficultée va jouer sur l'incrémentation en Y des vaisseaux*/
+                            if(dif==1)
+                            {
+                                tabyV[i]=tabyV[i]+1;
+                            }
+                            else if(dif==2)
+                            {
+                                tabyV[i]=tabyV[i]+2;
+                            }
+                            else
+                            {
+                                tabyV[i]=tabyV[i]+3;
+                            }
+                            if(tabyV[i]>24)
+                            {
+                                tabyV[i]=1;
+
+                                tabxV[i]=rand()%79 + 1;
+                            }
+                            gotoxy(tabxV[i],tabyV[i]);
+                            printf("xxx");
+                        }
+                    }
+/*----------------------------------------------------*/
+
+/*-------------------Déplacement et action de la base-----------------*/
+                    /* dessiner personnage à la bonne position */
+                    gotoxy(x_base,y_base);
+                    printf(" ");
+
+                    if(kbhit()==1)
+                    {
+                        touche = getch();
+
+                        /*Si on appuie sur la touche A:*/
+                        if(touche=='a')
+                        {
+                            if(x_base>1)
+                            {
+                                x_base= x_base-1; /* gauche, attention : saturer sur les bords ! */
+                            }
+                        }
+
+                        /*Si on appuie sur l'ESPACE = détection de tir:*/
+                        if(touche==32)
+                        {
+                            x_tir=x_base;
+                            y_tir=22;
+                            while(y_tir>2)
+                            {
+                                /*dessiner le tir à la bonne position*/
+                                y_tir--;
+
+                                gotoxy(x_tir,y_tir);
+                                printf("|");
+
+                                /*vaisseau toucher = disparition*/
+                                for(i=0; i<5; i++)
+                                {
+                                    if((x_tir==tabxA[i] || x_tir==tabxA[i]+1 || x_tir==tabxA[i]+2) && y_tir==tabyA[i])
+                                    {
+                                        gotoxy(tabxA[i],tabyA[i]);
+                                        printf("   ");
+
+                                        tabyA[i]=1;
+                                        tabxA[i]=rand()%79 + 1;
+
+                                        score=score+20;
+                                    }
+                                }
+                                if((x_tir==x_boss || x_tir==x_boss+1 || x_tir==x_boss+2 || x_tir==x_boss+3 || x_tir==x_boss+4 || x_tir==x_boss+5 || x_tir==x_boss+6) && y_tir==y_boss)
+                                {
+                                    compteur_tir++;
+
+                                    if(compteur_tir>=3)
+                                    {
+                                        gotoxy(x_boss,y_boss);
+                                        printf("       ");
+                                        modeboss= 0;
+                                        y_boss=1;
+                                        x_boss=rand()%79 + 1;
+                                        compteur_tir=0;
+                                    }
+                                }
+                            }
+                        }
+
+                        /*Si on appuie sur la touche Z:*/
+                        if(touche=='z')
+                        {
+                            if(x_base<77)
+                            {
+                                x_base= x_base+1; /* droite, attention : saturer sur les bords ! */
+                            }
+
+                        }
+                    }
+
+
+                    /* dessiner personnage à la bonne position */
+                    gotoxy(x_base,y_base);
+                    printf("*");
+/*-----------------------------------------------------------------------*/
+
+/*------------------Fluctuation des vies---------------------------------*/
+                    for(i=0; i<5; i++)
+                    {
+                        if( (x_base==tabxA[i] || x_base==tabxA[i]+1 || x_base==tabxA[i]+2) && y_base==tabyA[i])
+                        {
+                            vie=vie-1;
+                        }
+                        if( (x_base==tabxV[i] || x_base==tabxV[i]+1 || x_base==tabxV[i]+2) && y_base==tabyV[i])
+                        {
+                            vie=vie+1;
+                        }
+                    }
+/*-----------------------------------------------------------------------*/
+                    Sleep(150);
+
+/*-------------------Toutes les condition de fin du jeu------------------*/
+                    if(fin_boss==0)
+                    {
+                        vie=0;
+                    }
+                    if(vie<=0)
+                    {
+
+                        fin=0;
+                        system("cls");
+                        printf("\n\n\n\n\n\n\n\n\t\t\t\t\t\tVOUS AVEZ PERDU !");
+
+                        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAppuyez sur une touche pour continuer...");
+                        getchar();
+                        system("cls");
+                    }
+                    if(touche==27)// = appuyez sur la touche ECHAP
+                    {
+                        fin=0;
+                        system("cls");
+                        printf("\n\n\n\n\n\n\n\n\t\t\t\t\t\tVOUS AVEZ PERDU !");
+
+                        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAppuyez sur une touche pour continuer...");
+                        getchar();
+                        system("cls");
+                    }
+/*-------------------------------------------------------------------------*/
+                }
+                /*Reset (VIE, TEMPS, SCORE) si l'utilisateur souhaite faire une nouvelle partie*/
+                vie=5;
+                time_min=0;
+                time_sec=0;
+                score=0;
+            }
+        }
+    }
+}
+void accueil(void)
+{
+    color(14,0);
+
+    printf("\t\t*******************************************************************************************\n"
+           "\t\t*                                                                                        *\n"
+           "\t\t*                                                                                        *\n"
+           "\t\t*                  ,adPPYba, 8b,dPPYba,  ,adPPYYba,  ,adPPYba,  ,adPPYba,                *\n"
+           "\t\t*                  I8[    '' 88P'    8a          Y8  a8'        8P_____88                *\n"
+           "\t\t*                   `Y8ba,   88       d8 ,adPPPPP88  8b         8PP''''''                *\n"
+           "\t\t*                  aa    ]8I 88b,   ,a8  88,    ,88  8a,   ,aa  8b,   ,aa                *\n"
+           "\t\t*                  `'YbbdP   88`YbbdPD   `'8bbdP'Y8  `'Ybbd8D   `'Ybbd8''                *\n"
+           "\t\t*                            88                                                          *\n"
+           "\t\t*                            88                                                          *\n"
+           "\t\t*                                                                                        *\n"
+           "\t\t*                                                  88                                    *\n"
+           "\t\t*    88                                            88                                    *\n"
+           "\t\t*                                                  88                                    *\n"
+           "\t\t*    88 8b,dPPYba, 8b       d8 ,adPPYYba,  ,adPPYb,88  ,adPPYba, 8b,dPPYba, ,adPPYba,    *\n"
+           "\t\t*    88 88P'    8a `8b     d8'        `Y8 a8    ` Y88 a8P_____88 88P'    Y8 I8[    ''    *\n"
+           "\t\t*    88 88      88  `8b   d8'  ,adPPPPP88 8b       88 8PP''''''' 88          `'Y8ba,     *\n"
+           "\t\t*    88 88      88   `8b,d8'   88,    ,88 '8a,   ,d88 '8b,   ,aa 88         aa    ]8I    *\n"
+           "\t\t*    88 88      88     '8'     `'8bbdP'Y8  `'8bbdP'Y8  `'Ybbd8'  88         `'YbbdP''    *\n"
+           "\t\t*                                                                                        *\n"
+           "\t\t*                                                                                        *\n"
+           "\t\t******************************************************************************************");
+    color(15,0);
+
+    printf("\n\nAppuyez sur une touche pour continuer...");
+    getchar();
+    system("cls");
+}
+
+int menu(void)
+{
+    int c;
+
+    printf("\n\n\n\n\n\n\t\t\t\t\t\t SPACE INVADERS\n\n\n\n\t\t\t\t\t1-)Choissisez la difficultee:\n\t\t\t\t\t2-)Jouer\n\t\t\t\t\t3-)Regles\n\t\t\t\t\t4-)Quitter\n\n\t\t\t\t\tChoix:");
+    scanf("%d",&c);
+
+    while(c<1 || c>4)
+    {
+        printf("Saisissez un choix du menu possible ! Recommencez :");
+        printf("Appuyez sur une touche pour recommencer !");
+
+        getchar();
+        getchar();
+        system("cls");
+
+        printf("\n\n\n\n\n\n\t\t\t\t\t\t SPACE INVADERS\n\n\n\n\t\t\t\t\t1-)Choisissez la difficultee:\n\t\t\t\t\t2-)Jouer\n\t\t\t\t\t3-)Quitter\n\n\t\t\t\t\tChoix:");
+        scanf("%d",&c);
+    }
+    return c;
+}
+
+void regle(void)
+{
+
+    printf("\nComment jouer:\n\n\t1-Deplacer votre base avec les touches 'A'(gauche), 'Z'(droite) afin d'eviter les vaisseaux ennemis '___'.");
+    printf("\n\n\t2-Attention a votre vie ! Initialement a 5, elle diminue si vous percutez des vaisseaux ennemis.");
+    printf("\n\t  Pour gagner a nouveau des vies percutez des vitamines 'xxx'.");
+    printf("\n\n\t3-Defendez votre base pour faire durer la partie !");
+    printf("\n\t  Avec la touche 'ESPACE', vous envoyez des lasers, si le laser touche le vaisseau ennemis,");
+    printf("\n\t  alors le vaisseau disparait.");
+    printf("\n\nAppuyez sur une touche pour continuer...");
+}
+
+int difficult(void)
+{
+    int c;
+
+    printf("\nVous avez le choix entre 3 difficultee:\t1-)Facile\n\t\t\t\t\t2-)Moyenne\n\t\t\t\t\t3-)Difficile\n\nChoix :");
+    scanf("%d",&c);
+
+    while(c<1 || c>3)
+    {
+        printf("Saisissez un choix du menu possible ! Recommencez :");
+        scanf("%d",&c);
+    }
+
+    return c;
+
+}
+
+void mise_en_page_jeu(void)
+{
+    printf("--------------------------------------------------------------------------------------------------------------\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "|                                                                                     |                      |\n"
+           "--------------------------------------------------------------------------------------------------------------");
+}
+/*---------------------------------------------------------------------------*/
+/* FONCTIONS DE GESTION D'ECRAN */
+/*---------------------------------------------------------------------------*/
+
+/*****************************************/
+/*  POSITIONNEMENT DU CURSEUR SUR L'ECRAN
+    x est la colonne et y est la ligne   */
+/*****************************************/
+void gotoxy(int x, int y)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD pos;
+    pos.X = x;
+    pos.Y = y;
+    SetConsoleCursorPosition(hConsole, pos);
+}
+
+/************************************************************/
+/*  Choix des couleurs de la police et de la fenêtre CONSOLE
+    cT correspond à la couleur du texte
+    cF correspond à la couleur de fond
+    Codes couleurs :
+        0: noir
+        1: bleu foncé
+        2: vert
+        3: bleu-gris
+        4: marron
+        5: pourpre
+        6: kaki
+        7: gris clair
+        8: gris
+        9: bleu
+        10: vert fluo
+        11: turquoise
+        12: rouge
+        13: rose fluo
+        14: jaune fluo
+        15: blanc               */
+/************************************************************/
+
+void color(int cT,int cF)
+{
+    HANDLE H=GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(H,cF*16+cT);
+
+}

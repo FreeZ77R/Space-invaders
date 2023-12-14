@@ -1,0 +1,25 @@
+# depslib dependency file v1.0
+1578673086 source:e:\space invaders\space\main.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<time.h>
+
+1578819026 source:c:\users\christina\desktop\space invaders\space\main.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<time.h>
+
+1578929192 source:f:\space invaders\space\main.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<time.h>
+
+1578929192 source:f:\space\main.c
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<time.h>
+
